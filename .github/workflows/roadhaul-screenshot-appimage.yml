@@ -1,0 +1,60 @@
+name: PSP emulator screenshot via official AppImage
+on:
+  push:
+    branches: [psp-roadhaul-build]
+    paths: [.github/workflows/roadhaul-screenshot-appimage.yml]
+  pull_request:
+    branches: [main]
+    paths: [.github/workflows/roadhaul-screenshot-appimage.yml]
+jobs:
+  capture:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Obtain built homebrew
+        run: |
+          mkdir -p psp-roadhaul/build
+          base64 -d psp-roadhaul/source.tar.xz.base64 | tar -xJ -C psp-roadhaul/build
+          docker run --rm -v "$PWD/psp-roadhaul/build:/source" -w /source pspdev/pspdev:v20261001 make -j2
+      - name: Get official PPSSPP AppImage
+        run: |
+          python3 - <<'PY'
+          import urllib.request,json,sys
+          req=urllib.request.Request('https://api.github.com/repos/hrydgard/ppsspp/releases/tags/v1.20.4',headers={'User-Agent':'roadhaul-ci'})
+          info=json.load(urllib.request.urlopen(req))
+          names=[(x['name'],x['browser_download_url']) for x in info['assets']]
+          print(names)
+          found=next((url for name,url in names if 'AppImage' in name and 'x86_64' in name),None)
+          if not found: found=next((url for name,url in names if 'AppImage' in name),None)
+          if found is None: sys.exit('No official AppImage release asset')
+          print('Downloading',found)
+          urllib.request.urlretrieve(found,'ppsspp.AppImage')
+          PY
+          chmod +x ppsspp.AppImage
+          ./ppsspp.AppImage --appimage-extract >/dev/null
+      - name: Capture live game output
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq xvfb imagemagick xdotool libgl1-mesa-dri libfuse2t64
+          mkdir -p psp-roadhaul/screenshots
+          xvfb-run -a -s '-screen 0 960x544x24 +extension GLX' bash -c '
+            export LIBGL_ALWAYS_SOFTWARE=1
+            ./squashfs-root/AppRun --fullscreen "$PWD/psp-roadhaul/build/EBOOT.PBP" > psp-roadhaul/appimage.log 2>&1 &
+            PID=$!
+            sleep 15
+            import -window root psp-roadhaul/screenshots/capture1.png
+            sleep 5
+            import -window root psp-roadhaul/screenshots/capture2.png
+            kill "$PID" || true
+          '
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: RoadHaul-AppImage-captures
+          path: |
+            psp-roadhaul/screenshots/
+            psp-roadhaul/appimage.log
+          if-no-files-found: warn
