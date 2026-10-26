@@ -1,0 +1,60 @@
+name: PSP in-emulator screenshot capture
+on:
+  push:
+    branches: [psp-roadhaul-build]
+    paths: [.github/workflows/roadhaul-screenshots.yml]
+  pull_request:
+    branches: [main]
+    paths: [.github/workflows/roadhaul-screenshots.yml]
+  workflow_dispatch:
+jobs:
+  screenshots:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Prepare game sources
+        run: |
+          mkdir -p psp-roadhaul/build
+          base64 -d psp-roadhaul/source.tar.xz.base64 | tar -xJ -C psp-roadhaul/build
+      - name: Build PSP homebrew
+        run: |
+          docker run --rm --platform linux/amd64 -v "$PWD/psp-roadhaul/build:/source" -w /source pspdev/pspdev:v20261001 make -j2
+          file psp-roadhaul/build/EBOOT.PBP
+      - name: Install Linux display and PPSSPP from Flathub
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq flatpak xvfb imagemagick xdotool mesa-utils libgl1-mesa-dri
+          sudo flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
+          sudo flatpak install --system --noninteractive -y flathub org.ppsspp.PPSSPP
+      - name: Capture actual PPSSPP image output
+        shell: bash
+        run: |
+          mkdir -p psp-roadhaul/screenshots
+          xvfb-run -a -s '-screen 0 960x544x24 +extension GLX' bash -c '
+            export LIBGL_ALWAYS_SOFTWARE=1
+            export GALLIUM_DRIVER=llvmpipe
+            flatpak run org.ppsspp.PPSSPP --fullscreen "$PWD/psp-roadhaul/build/EBOOT.PBP" > psp-roadhaul/ppsspp.log 2>&1 &
+            PID=$!
+            sleep 14
+            import -window root psp-roadhaul/screenshots/01_start.png
+            sleep 9
+            import -window root psp-roadhaul/screenshots/02_road.png
+            xdotool key x
+            sleep 3
+            import -window root psp-roadhaul/screenshots/03_after_input.png
+            kill "$PID" || true
+          '
+          cat psp-roadhaul/ppsspp.log || true
+          file psp-roadhaul/screenshots/*
+          test -s psp-roadhaul/screenshots/01_start.png
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: RoadHaul-actual-PPSSPP-captures
+          path: |
+            psp-roadhaul/screenshots/*.png
+            psp-roadhaul/ppsspp.log
+          if-no-files-found: warn
