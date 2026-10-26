@@ -39,6 +39,8 @@ jobs:
           command -v ffmpeg || true
           timeout 90s xvfb-run -a -s '-screen 0 960x544x24 +extension GLX' bash -c '
             export LIBGL_ALWAYS_SOFTWARE=1
+            export SDL_AUDIODRIVER=dummy
+            export SDL_VIDEODRIVER=x11
             ./squashfs-root/AppRun --fullscreen "$PWD/psp-roadhaul/build/EBOOT.PBP" > psp-roadhaul/emulator.log 2>&1 &
             PID=$!
             sleep 10
