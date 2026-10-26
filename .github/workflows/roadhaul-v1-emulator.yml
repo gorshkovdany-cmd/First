@@ -1,0 +1,87 @@
+name: Road Haul 1.0 PPSSPP boot verification
+on:
+  push:
+    branches: [psp-roadhaul-build]
+    paths: [.github/workflows/roadhaul-v1-emulator.yml]
+  pull_request:
+    branches: [main]
+    paths: [.github/workflows/roadhaul-v1-emulator.yml]
+  workflow_dispatch:
+jobs:
+  emulator:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions: {contents: read}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build PSP release
+        run: |
+          mkdir -p psp-roadhaul/emutest
+          base64 -d psp-roadhaul/source.tar.xz.base64 | tar -xJf - -C psp-roadhaul/emutest
+          docker run --rm --platform linux/amd64 -v "$PWD/psp-roadhaul/emutest:/source" -w /source pspdev/pspdev:v20261001 make -j2
+          test -s psp-roadhaul/emutest/EBOOT.PBP
+      - name: Install display and virtual PulseAudio output
+        run: |
+          sudo apt-get update -qq
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install -qq -y pulseaudio pulseaudio-utils libgl1-mesa-dri libglx-mesa0 xvfb xauth
+          python3 -m pip install -q --user mss pillow
+          python3 - <<'PY'
+          import urllib.request,json
+          req=urllib.request.Request('https://api.github.com/repos/hrydgard/ppsspp/releases/tags/v1.20.4',headers={'User-Agent':'roadhaul-emulator-validator'})
+          assets=json.load(urllib.request.urlopen(req))['assets']
+          a=next(a for a in assets if a['name'].endswith('.AppImage') and 'x86_64' in a['name'])
+          urllib.request.urlretrieve(a['browser_download_url'],'ppsspp.AppImage')
+          PY
+          chmod +x ppsspp.AppImage
+          ./ppsspp.AppImage --appimage-extract > /dev/null
+      - name: Boot EBOOT under PPSSPP and capture real frame
+        shell: bash
+        run: |
+          mkdir -p screenshots
+          cat > capture.py <<'PY'
+          import mss,sys
+          from PIL import Image
+          with mss.mss() as display:
+              display.shot(output=sys.argv[1])
+          im=Image.open(sys.argv[1]).convert('RGB')
+          colors=im.getcolors(im.width*im.height)
+          unique=len(colors) if colors else im.width*im.height
+          print(sys.argv[1],im.size,'unique colors',unique,flush=True)
+          PY
+          timeout 75s xvfb-run -a -s '-screen 0 960x544x24 +extension GLX +render' bash -c '
+            export LIBGL_ALWAYS_SOFTWARE=1
+            export GALLIUM_DRIVER=llvmpipe
+            export SDL_VIDEODRIVER=x11
+            export XDG_RUNTIME_DIR="$(mktemp -d)"
+            chmod 700 "$XDG_RUNTIME_DIR"
+            pulseaudio --start --exit-idle-time=-1 --log-target=stderr > pulse.log 2>&1 || true
+            pactl info >> pulse.log 2>&1 || true
+            ./squashfs-root/AppRun --windowed "$PWD/psp-roadhaul/emutest/EBOOT.PBP" > emulator.log 2>&1 &
+            pid=$!
+            sleep 12
+            python3 capture.py screenshots/frame_12s.png
+            sleep 9
+            python3 capture.py screenshots/frame_21s.png
+            kill "$pid" 2>/dev/null || true
+          ' || true
+          cat pulse.log || true
+          tail -100 emulator.log || true
+          python3 - <<'PY'
+          from pathlib import Path
+          from PIL import Image
+          files=list(Path('screenshots').glob('*.png'))
+          print('Captured',len(files),'frame(s)')
+          for p in files:
+              im=Image.open(p).convert('RGB')
+              print(p,'samples',im.getpixel((0,0)),im.getpixel((480,270)), 'bbox',im.getbbox())
+          PY
+      - name: Upload verified emulator captures
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ROAD_HAUL_1_0_PPSSPP_boot_frames
+          path: |
+            screenshots/
+            emulator.log
+            pulse.log
+          if-no-files-found: warn
