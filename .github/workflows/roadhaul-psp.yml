@@ -1,0 +1,46 @@
+name: Build Road Haul PSP homebrew
+on:
+  push:
+    branches:
+      - psp-roadhaul-build
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'psp-roadhaul/**'
+      - '.github/workflows/roadhaul-psp.yml'
+  workflow_dispatch:
+jobs:
+  build-psp:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Unpack sources
+        shell: bash
+        run: |
+          mkdir -p psp-roadhaul/build
+          base64 -d psp-roadhaul/source.tar.xz.base64 | tar -xJ -C psp-roadhaul/build
+          ls -la psp-roadhaul/build/
+      - name: PSPDEV compile
+        shell: bash
+        run: |
+          docker run --rm --platform linux/amd64 \
+            --volume "$PWD/psp-roadhaul/build:/source" \
+            --workdir /source \
+            pspdev/pspdev:v20261001 make -j2
+          test -s psp-roadhaul/build/EBOOT.PBP
+      - name: Assemble install package
+        run: |
+          mkdir -p dist/PSP/GAME/ROADHAUL
+          cp psp-roadhaul/build/EBOOT.PBP dist/PSP/GAME/ROADHAUL/EBOOT.PBP
+          cd dist && zip -r ../ROAD_HAUL_PSP_Install.zip PSP
+      - name: Upload installable PSP build
+        uses: actions/upload-artifact@v4
+        with:
+          name: ROAD_HAUL_PSP_Install
+          path: ROAD_HAUL_PSP_Install.zip
+          if-no-files-found: error
