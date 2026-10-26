@@ -1,0 +1,67 @@
+name: Diagnose and repack PSP Russian homebrew as encrypted module
+on:
+  push:
+    branches: [psp-rus-compatible-boot]
+    paths:
+      - .github/workflows/psp-rus-encrypted.yml
+  pull_request:
+    branches: [main]
+    paths:
+      - .github/workflows/psp-rus-encrypted.yml
+  workflow_dispatch:
+jobs:
+  prepare-boot-compatible-pbp:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    permissions: {contents: read}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Restore source and run tests
+        run: |
+          set -euxo pipefail
+          mkdir -p build-ru
+          base64 -d psp-rus/source.tar.xz.base64 | tar -xJf - -C build-ru
+          (cd build-ru && ./tests/run_tests.sh && ./tests/run_render_tests.sh && ./tests/run_stress.sh && ./tests/safety_audit.sh && python3 tests/check_russian.py)
+      - name: Compile original PSP application
+        run: |
+          docker run --rm --platform linux/amd64 -v "$PWD/build-ru:/source" -w /source pspdev/pspdev:v20261001 make -j2
+          test -s build-ru/EBOOT.PBP
+      - name: Install PSP binary formatter
+        run: |
+          cargo install pspbuild --locked
+          pspbuild --help
+      - name: Encrypt DATA.PSP and verify cryptography
+        run: |
+          set -euxo pipefail
+          mkdir -p dist/PSP/GAME/DALREYS
+          pspbuild encrypt build-ru/EBOOT.PBP -o dist/PSP/GAME/DALREYS/EBOOT.PBP -v
+          pspbuild inspect dist/PSP/GAME/DALREYS/EBOOT.PBP | tee psp-inspection.txt
+          pspbuild verify dist/PSP/GAME/DALREYS/EBOOT.PBP | tee psp-verification.txt
+          python3 - <<'PY'
+          from pathlib import Path
+          import struct,zipfile
+          b=Path("dist/PSP/GAME/DALREYS/EBOOT.PBP").read_bytes()
+          assert b[:4]==b"\x00PBP"
+          offs=struct.unpack_from("<8I",b,8)
+          assert list(offs)==sorted(offs)
+          sfo=b[offs[0]:offs[1]]
+          assert "ДАЛЬНИЙ РЕЙС 1.0".encode("utf-8") in sfo
+          assert b[offs[6]:offs[6]+4]==b"~PSP", "Executable must be encrypted PSP PRX, not plain ELF"
+          assert len(b)>4096
+          print("CHECKED:",len(b),"encrypted module, valid PBP offsets and Russian title")
+          PY
+          printf 'Русская игра для PSP 3008.\n\nСкопируй папку DALREYS из архива в PSP/GAME/ на карте памяти.\nВерсия с зашифрованным модулем для повышения совместимости с оригинальной прошивкой.\nНе изменяет прошивку, но работа на реальной PSP пока не подтверждена.\n' > dist/ИНСТРУКЦИЯ.txt
+          (cd dist && zip -q -r ../DALNIY_REYS_PSP_COMPAT.zip .)
+          unzip -t DALNIY_REYS_PSP_COMPAT.zip
+          sha256sum DALNIY_REYS_PSP_COMPAT.zip dist/PSP/GAME/DALREYS/EBOOT.PBP > SHA256SUMS.txt
+      - name: Upload result
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: DALNIY_REYS_PSP_COMPAT_Encrypted
+          path: |
+            DALNIY_REYS_PSP_COMPAT.zip
+            SHA256SUMS.txt
+            psp-inspection.txt
+            psp-verification.txt
+          if-no-files-found: warn
