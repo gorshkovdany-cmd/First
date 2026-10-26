@@ -37,24 +37,19 @@ jobs:
           command -v xvfb-run || true
           command -v import || true
           command -v ffmpeg || true
+          python3 -m pip install --user -q mss pillow
           timeout 90s xvfb-run -a -s '-screen 0 960x544x24 +extension GLX' bash -c '
             export LIBGL_ALWAYS_SOFTWARE=1
             export SDL_AUDIODRIVER=dummy
+            export SDL_AUDIO_DRIVER=dummy
             export SDL_VIDEODRIVER=x11
+            export SDL_VIDEO_DRIVER=x11
             ./squashfs-root/AppRun --fullscreen "$PWD/psp-roadhaul/build/EBOOT.PBP" > psp-roadhaul/emulator.log 2>&1 &
             PID=$!
             sleep 10
-            if command -v import >/dev/null; then
-              import -window root psp-roadhaul/screenshots/screenshot-1.png
-            else
-              ffmpeg -hide_banner -y -f x11grab -video_size 960x544 -i "$DISPLAY" -frames:v 1 psp-roadhaul/screenshots/screenshot-1.png
-            fi
+            python3 -c "import mss; mss.mss().shot(output='psp-roadhaul/screenshots/screenshot-1.png')"
             sleep 6
-            if command -v import >/dev/null; then
-              import -window root psp-roadhaul/screenshots/screenshot-2.png
-            else
-              ffmpeg -hide_banner -y -f x11grab -video_size 960x544 -i "$DISPLAY" -frames:v 1 psp-roadhaul/screenshots/screenshot-2.png
-            fi
+            python3 -c "import mss; mss.mss().shot(output='psp-roadhaul/screenshots/screenshot-2.png')"
             kill "$PID" 2>/dev/null || true
           ' || true
           cat psp-roadhaul/emulator.log || true
