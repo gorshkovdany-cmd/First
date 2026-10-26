@@ -1,0 +1,67 @@
+name: ROAD HAUL PSP 1.0 release
+on:
+  push:
+    branches: [psp-roadhaul-build]
+    paths: [.github/workflows/roadhaul-v1-release.yml, psp-roadhaul/source.tar.xz.base64]
+  pull_request:
+    branches: [main]
+    paths: [.github/workflows/roadhaul-v1-release.yml, psp-roadhaul/source.tar.xz.base64]
+  workflow_dispatch:
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    permissions: {contents: read}
+    steps:
+      - name: Fetch sources
+        uses: actions/checkout@v4
+      - name: Restore v1 project
+        shell: bash
+        run: |
+          mkdir -p psp-roadhaul/v1
+          base64 -d psp-roadhaul/source.tar.xz.base64 | tar -xJf - -C psp-roadhaul/v1
+          test -f psp-roadhaul/v1/src/sound_psp.c
+      - name: Run simulator and geometry tests
+        working-directory: psp-roadhaul/v1
+        shell: bash
+        run: |
+          ./tests/run_tests.sh
+          ./tests/run_render_tests.sh
+          ./tests/run_stress.sh
+          ./tests/safety_audit.sh
+      - name: Build real PSP EBOOT with PSPSDK
+        shell: bash
+        run: |
+          docker run --rm --platform linux/amd64 -v "$PWD/psp-roadhaul/v1:/source" -w /source pspdev/pspdev:v20261001 make -j2
+          test -s psp-roadhaul/v1/EBOOT.PBP
+      - name: Verify PBP structure and create install ZIP
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          from struct import unpack_from
+          path=Path('psp-roadhaul/v1/EBOOT.PBP')
+          data=path.read_bytes()
+          assert len(data)>4096
+          magic,version,*offsets=unpack_from('<4sI8I',data,0)
+          assert magic == b'\x00PBP',repr(magic)
+          assert len(offsets)==8 and all(40<=x<=len(data) for x in offsets)
+          assert offsets==sorted(offsets),offsets
+          print('PBP OK, version=',hex(version),'bytes=',len(data),'sections=',offsets)
+          PY
+          mkdir -p dist/PSP/GAME/ROADHAUL
+          cp psp-roadhaul/v1/EBOOT.PBP dist/PSP/GAME/ROADHAUL/EBOOT.PBP
+          cp psp-roadhaul/v1/README_RU.md dist/README_RU.md
+          cp psp-roadhaul/v1/docs/SAFETY_AND_QA.md dist/SAFETY_AND_QA.md
+          cd dist && zip -q -r ../ROAD_HAUL_PSP_1_0_Install.zip PSP README_RU.md SAFETY_AND_QA.md
+          cd .. && sha256sum psp-roadhaul/v1/EBOOT.PBP ROAD_HAUL_PSP_1_0_Install.zip > SHA256SUMS.txt
+          unzip -t ROAD_HAUL_PSP_1_0_Install.zip
+      - name: Publish PSP binary as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ROAD_HAUL_PSP_1_0_Install
+          path: |
+            ROAD_HAUL_PSP_1_0_Install.zip
+            SHA256SUMS.txt
+          if-no-files-found: error
+          retention-days: 90
