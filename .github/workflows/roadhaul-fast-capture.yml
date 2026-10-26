@@ -38,6 +38,15 @@ jobs:
           command -v import || true
           command -v ffmpeg || true
           python3 -m pip install --user -q mss pillow
+          cat > psp-roadhaul/grab_screen.py <<'PY'
+          import mss,sys
+          with mss.mss() as display:
+              display.shot(output=sys.argv[1])
+          PY
+          echo "APPIMAGE LAUNCHER:"
+          ls -l squashfs-root/AppRun
+          head -c 200 squashfs-root/AppRun | xxd || true
+          find squashfs-root -iname '*SDL*' | head -25 || true
           timeout 90s xvfb-run -a -s '-screen 0 960x544x24 +extension GLX' bash -c '
             export LIBGL_ALWAYS_SOFTWARE=1
             export SDL_AUDIODRIVER=dummy
@@ -47,9 +56,9 @@ jobs:
             ./squashfs-root/AppRun --fullscreen "$PWD/psp-roadhaul/build/EBOOT.PBP" > psp-roadhaul/emulator.log 2>&1 &
             PID=$!
             sleep 10
-            python3 -c "import mss; mss.mss().shot(output='psp-roadhaul/screenshots/screenshot-1.png')"
+            python3 psp-roadhaul/grab_screen.py psp-roadhaul/screenshots/screenshot-1.png
             sleep 6
-            python3 -c "import mss; mss.mss().shot(output='psp-roadhaul/screenshots/screenshot-2.png')"
+            python3 psp-roadhaul/grab_screen.py psp-roadhaul/screenshots/screenshot-2.png
             kill "$PID" 2>/dev/null || true
           ' || true
           cat psp-roadhaul/emulator.log || true
