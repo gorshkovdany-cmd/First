@@ -4,6 +4,7 @@
 #define RH_ROAD_SPACING 1800.0f
 #define RH_MAX_TRAFFIC 22
 #define RH_SAVE_VERSION 5
+#define RH_DAY_SECONDS 420.0f /* 7 real minutes per 24 in-game hours */
 #define RH_PI 3.14159265358979323846f
 
 typedef struct { const char *name; float mass_kg, wheelbase_m, torque_nm, gears[8];
