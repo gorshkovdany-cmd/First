@@ -194,15 +194,16 @@ static void start_patrol(RH_TrafficWorld *w,const RH_TPlayer *player){
  p->yaw=player->heading;p->speed=0;
 }
 void rh_traffic_report_violation(RH_TrafficWorld *w,RH_Violation violation,const RH_TPlayer *player){
- if(!w||!player||!isfinite(player->x)||!isfinite(player->z)||
+ if(!w||!player||!isfinite(player->x)||!isfinite(player->z)||!isfinite(player->heading)||
  violation<RH_VIOLATION_SPEEDING||violation>RH_VIOLATION_COLLISION)return;
+ if(w->wanted||w->patrol_cooldown>0)return;
  w->last_violation=(uint8_t)violation;
- if(!w->wanted&&w->patrol_cooldown<=0)start_patrol(w,player);
+ start_patrol(w,player);
 }
 static void update_patrols(RH_TrafficWorld *w,RH_TPlayer *player,float dt,float wetness){
  if(w->patrol_cooldown>0)w->patrol_cooldown=tmax(0,w->patrol_cooldown-dt);
  if(!w->wanted)return;
- w->chase_time+=dt;
+ w->chase_time+=(double)dt;
  if(w->chase_time>=60.0f){
   w->wanted=0;w->patrol_count=0;w->chase_contact=0;
   for(int i=0;i<RH_TPATROLS;i++)w->patrols[i].active=0;
@@ -231,7 +232,7 @@ static void update_patrols(RH_TrafficWorld *w,RH_TPlayer *player,float dt,float 
   p->x+=sinf(p->yaw)*p->speed*dt;p->z+=cosf(p->yaw)*p->speed*dt;
  }
  /* A catch requires contact maintained, not one bad frame near the player. */
- if(nearest<4.0f)w->chase_contact+=dt;
+ if(nearest<4.0f&&fabsf(player->speed)<3.5f)w->chase_contact+=dt;
  else w->chase_contact=tmax(0,w->chase_contact-dt*2);
  if(w->chase_contact>=.75f){
   float fine=w->last_violation==RH_VIOLATION_COLLISION?900.0f:
