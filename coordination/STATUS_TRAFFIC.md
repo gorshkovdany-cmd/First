@@ -11,7 +11,7 @@ Date: 2026-10-28, deadline 06:20 UTC. Branch `roadhaul-traffic-8h`; PR targets `
 
 ## Evidence
 
-Local GNU C99 `-O2 -Wall -Wextra -Werror -pedantic` test runner: PASS. UBSan `-fsanitize=undefined -fno-sanitize-recover=all`: PASS. Earlier ASan pass for pre-final revision; rerun final revision in next cycle. Tests verify signal red stop/green release, crosswalk permission, automatic speeding/red detection, reinforcement escalation, timeout at 59.9 vs 60.0 s, catch once and fine limited to available money, car entry/exit and collision finite, loaded vs unloaded and wet grip, 30-minute deterministic city update. `sizeof(RH_TrafficWorld)=3040` bytes on host. No PSP runtime FPS or hardware test claimed. Source content was verified byte-for-byte against the locally tested version via FNV-1a for all 6 committed files.
+Local GNU C99 `-O2 -Wall -Wextra -Werror -pedantic` test runner: PASS. UBSan `-fsanitize=undefined -fno-sanitize-recover=all`: PASS. ASan final revision `-fsanitize=address -fno-omit-frame-pointer` with leak detection: PASS. Tests verify signal red stop/green release, crosswalk permission, automatic speeding/red detection, reinforcement escalation, timeout at 59.9 vs 60.0 s, catch once and fine limited to available money, car entry/exit and collision finite, loaded vs unloaded and wet grip, 30-minute deterministic city update. `sizeof(RH_TrafficWorld)=3040` bytes on host. No PSP runtime FPS or hardware test claimed. Source content was verified byte-for-byte against the locally tested version via FNV-1a for all 6 committed files.
 
 ## Integration contract for RELEASE (do not change old Game save struct blindly)
 
