@@ -3,7 +3,7 @@ on:
   push:
     branches: [roadhaul-realism-8h]
   pull_request:
-    branches: [roadhaul-realism-8h]
+    branches: [roadhaul-realism-8h, main]
   workflow_dispatch:
 permissions:
   contents: read
