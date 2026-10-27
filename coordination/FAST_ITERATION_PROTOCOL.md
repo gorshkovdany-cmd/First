@@ -26,3 +26,11 @@ Four automation IDs / branches / role statuses:
 - Police top speed approx 0.9× *current player vehicle* theoretical maximum, 60s real-time pursuit, up to three backups, traffic-safe approaches from rear/front/side, single fine on capture.
 - Delivery length via graph from 100m, day-night in 420s, 1–3 weather transitions/day.
 - If the deadline is approaching with incomplete features, stop broadening scope, ship verified best effort and transparent blockers. Do not risk a broken last-minute build.
+
+## Engineering depth per execution — strict guidance from user, 28 October
+- Aim for **~40 minutes of uninterrupted, useful engineering work per iteration where runtime allows**. This is a user target, **not an actual controllable scheduler duration**; do not fake active time or claim to have selected the underlying model or its reasoning level.
+- One automation run should perform **several concrete edit→test→debug cycles**, not merely a one-minute change followed by an hourly wait. Prioritize work over superficial progress messages. Do not artificially sleep or run meaningless loops to reach 40 minutes.
+- Before marking COMPLETE, inspect current code and recent sibling PRs, implement substantial functionality, validate build/tests and runtime diagnostics, and attach precise commit SHA, changed paths, test commands and outcomes (including failures).
+- While waiting on asynchronous GitHub Actions, continue on a separate useful, nonconflicting test or module; use work budget constructively. Respect GitHub concurrency and per-role file ownership.
+- If platform cuts an execution short, leave a reproducible GitHub handoff and permit prompt early wake of an idle peer via the bounded `run_now` protocol. Do not claim a full 40 minute run without tool evidence.
+- Deadline is still 10:00 MSK. Between 09:15 and release, prioritize build reproducibility, fixes and installable PSP artifacts over prolonged feature iterations.
