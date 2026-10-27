@@ -10,7 +10,7 @@ static void check(void *ctx,const RHAssetTriangle *t){
   assert(isfinite(t->p[k].x));assert(isfinite(t->p[k].y));assert(isfinite(t->p[k].z));
   assert(fabsf(t->p[k].x)<10000);assert(fabsf(t->p[k].y)<10000);assert(fabsf(t->p[k].z)<10000);
  }
- assert((t->abgr>>24)==255u);
+ assert(t->emissive==2 ? (t->abgr>>24)>0u && (t->abgr>>24)<255u : (t->abgr>>24)==255u);
 }
 int main(void){
  for(int i=0;i<1440;i++){
@@ -50,6 +50,15 @@ int main(void){
  assert(rh_asset_emit(RH_ASSET_CAR,invalid,10,night,check,0)==0);
  assert(rh_asset_triangle_budget(RH_ASSET_CAR,99)==0);
  assert(rh_asset_triangle_budget((RHAssetType)100,0)==0);
+ RHAssetInstance decal={0,0,0,0,1,0};
+ triangles=0;
+ assert(rh_asset_emit_shadow(RH_ASSET_CAR,decal,25,12,noon,check,0)==2);
+ assert(triangles==2);
+ assert(rh_asset_emit_shadow(RH_ASSET_CAR,decal,25,1,night,check,0)==0);
+ triangles=0;
+ assert(rh_asset_emit_light_pool(RH_ASSET_STREETLAMP,decal,25,night,check,0)==8);
+ assert(triangles==8);
+ assert(rh_asset_emit_light_pool(RH_ASSET_STREETLAMP,decal,25,noon,check,0)==0);
  printf("PASS: 9 model types x 3 LODs; %u emitted triangles, %u night emissive; 1440 sky steps\n",total,night_emissive);
  return 0;
 }
