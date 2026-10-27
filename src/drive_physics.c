@@ -28,7 +28,9 @@ void rh_drive_init(RH_DriveBody *v,int kind,float x,float z,float yaw){
 void rh_drive_step(RH_DriveBody *v,RH_DriveInput in,float dt,float wetness,float road_grip,float slope){
  if(!v||!v->active||v->kind>2||!isfinite(dt)||!isfinite(wetness)||
  !isfinite(road_grip)||!isfinite(slope)||!isfinite(v->speed_mps)||
- !isfinite(v->x)||!isfinite(v->z)||!isfinite(v->yaw)||dt<=0)return;
+ !isfinite(v->x)||!isfinite(v->z)||!isfinite(v->yaw)||
+ !isfinite(v->rpm)||!isfinite(v->engine_response)||!isfinite(v->trailer_mass_kg)||
+ !isfinite(v->trailer_yaw)||!isfinite(v->fuel_l)||!isfinite(v->damage)||dt<=0)return;
  dt=dmin(dt,.05f);wetness=dclamp(wetness,0,1);road_grip=dclamp(road_grip,.1f,1);
  slope=dclamp(slope,-.3f,.3f);
  const RH_DriveSpec *s=&RH_DRIVE_SPECS[v->kind];
@@ -81,7 +83,10 @@ void rh_drive_step(RH_DriveBody *v,RH_DriveInput in,float dt,float wetness,float
 }
 static float body_radius(const RH_DriveBody *v){return RH_DRIVE_SPECS[v->kind].length_m*.37f;}
 int rh_drive_resolve_collision(RH_DriveBody *a,RH_DriveBody *b){
- if(!a||!b||a==b||!a->active||!b->active||a->kind>2||b->kind>2)return 0;
+ if(!a||!b||a==b||!a->active||!b->active||a->kind>2||b->kind>2||
+ !isfinite(a->x)||!isfinite(a->z)||!isfinite(b->x)||!isfinite(b->z)||
+ !isfinite(a->speed_mps)||!isfinite(b->speed_mps)||
+ !isfinite(a->trailer_mass_kg)||!isfinite(b->trailer_mass_kg))return 0;
  float dx=b->x-a->x,dz=b->z-a->z;
  float dist2=dx*dx+dz*dz;
  if(!isfinite(dist2))return 0;
@@ -123,7 +128,7 @@ int rh_drive_try_exit(RH_Driver *driver,RH_DriveBody *fleet,int count){
  if(!driver||!fleet||driver->on_foot||count<1||count>RH_DRIVE_VEHICLE_SLOTS||
  driver->vehicle_index<0||driver->vehicle_index>=count)return 0;
  RH_DriveBody *v=&fleet[driver->vehicle_index];
- if(!v->active||!v->occupied||dabs(v->speed_mps)>.6f)return 0;
+ if(!v->active||!v->occupied||v->kind>2||dabs(v->speed_mps)>.6f)return 0;
  float ex=v->x+cosf(v->yaw)*3.0f,ez=v->z-sinf(v->yaw)*3.0f;
  if(ex<1||ez<1||ex>4095||ez>4095)return 0;
  for(int i=0;i<count;i++)if(i!=driver->vehicle_index&&fleet[i].active){
