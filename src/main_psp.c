@@ -21,7 +21,8 @@ static void setup_callbacks(void){
  int id=sceKernelCreateThread("Callbacks",callback_thread,0x11,0x1000,0,0);
  if(id>=0)sceKernelStartThread(id,0,0);
 }
-static const char *savepath="ms0:/PSP/GAME/ROADHAUL/SAVE.DAT";
+static const char *savepath="ms0:/PSP/GAME/DALREYS/SAVE.DAT";
+static const char *legacy_savepath="ms0:/PSP/GAME/ROADHAUL/SAVE.DAT";
 static int try_load(Game *g,const char *path){
  if(rh_load(g,path))return 1;
  char backup[256];snprintf(backup,sizeof backup,"%s.BAK",path);
@@ -32,7 +33,7 @@ int main(int argc,char **argv){
  scePowerSetClockFrequency(333,333,166);
  sceCtrlSetSamplingCycle(0);sceCtrlSetSamplingMode(PSP_CTRL_MODE_ANALOG);
  static Game game;rh_new_game(&game);
- if(!try_load(&game,savepath))try_load(&game,"SAVE.DAT");
+ if(!try_load(&game,savepath) && !try_load(&game,legacy_savepath))try_load(&game,"SAVE.DAT");
  rh_render_init();rh_sound_start();
  unsigned int previous=0,pending=0;unsigned long long tick=sceKernelGetSystemTimeWide();
  float accumulator=0,save_clock=0;
