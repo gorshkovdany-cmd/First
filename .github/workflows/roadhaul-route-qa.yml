@@ -2,7 +2,7 @@ name: RoadHaul - road routing and mission contract QA
 on:
   push:
     branches:
-      - roadhaul-route-planner-8h
+      - roadhaul-routes-safe-8h
   pull_request:
     branches:
       - roadhaul-realism-8h
@@ -28,6 +28,14 @@ jobs:
           ASAN_OPTIONS=detect_leaks=1 /tmp/roadhaul_route_san
       - name: Run camera-facing city sector/LOD selection regression
         run: sh tests/run_visibility_budget.sh
+      - name: PSPDEV compile smoke test of both new runtime modules
+        run: |
+          docker run --rm --platform linux/amd64 -v "$PWD:/source" -w /source \
+            pspdev/pspdev:v20261001 sh -c '
+              psp-gcc -std=gnu11 -O2 -G0 -Wall -Wextra -Werror -I src -c src/route_planner.c -o /tmp/rh_route.o &&
+              psp-gcc -std=gnu11 -O2 -G0 -Wall -Wextra -Werror -I src -c src/visibility_budget.c -o /tmp/rh_view.o &&
+              ls -l /tmp/rh_route.o /tmp/rh_view.o
+            '
       - name: Run visibility budget sanitizers
         run: |
           cc -std=c11 -g -O1 -fsanitize=address,undefined -fno-omit-frame-pointer -Wall -Wextra -Wpedantic -Werror \
