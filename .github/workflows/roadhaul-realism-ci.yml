@@ -1,0 +1,59 @@
+name: RoadHaul PSP realism CI and installable package
+on:
+  push:
+    branches: [roadhaul-realism-8h]
+  pull_request:
+    branches: [roadhaul-realism-8h]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  psp-build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run desktop logic/render regression tests
+        run: |
+          set -euxo pipefail
+          bash tests/run_tests.sh
+          bash tests/run_render_tests.sh
+          bash tests/run_stress.sh
+          bash tests/safety_audit.sh
+          python3 tests/check_russian.py
+      - name: Compile PSP homebrew with PSPDEV
+        run: |
+          docker run --rm --platform linux/amd64 \
+            -v "$PWD:/source" -w /source \
+            pspdev/pspdev:v20261001 make -j2
+          test -s EBOOT.PBP
+      - name: Verify PSP format and signed/encrypted compatibility build
+        run: |
+          cargo install pspbuild --locked
+          mkdir -p release/PSP/GAME/DALREYS
+          pspbuild encrypt EBOOT.PBP -o release/PSP/GAME/DALREYS/EBOOT.PBP -v
+          pspbuild verify release/PSP/GAME/DALREYS/EBOOT.PBP > release/PSP_COMPAT_VERIFY.txt
+          python3 - <<'PY'
+          from pathlib import Path
+          import struct
+          buf=Path('release/PSP/GAME/DALREYS/EBOOT.PBP').read_bytes()
+          assert buf[:4] == b'\x00PBP'
+          o=list(struct.unpack_from('<8I',buf,8))
+          assert o==sorted(o) and all(40<=p<=len(buf) for p in o)
+          assert buf[o[6]:o[6]+4]==b'~PSP'
+          assert 'ДАЛЬНИЙ РЕЙС'.encode('utf-8') in buf[o[0]:o[1]]
+          print('PBP and PRX format valid: size', len(buf))
+          PY
+          printf 'PSP/GAME/DALREYS/EBOOT.PBP\nИгра для PSP с поддержкой homebrew. Запуск на реальном устройстве пока не подтвержден.\n' > release/README_RU.txt
+          (cd release && zip -qr ../DALNIY_REYS_REALISM_PSP.zip .)
+          unzip -t DALNIY_REYS_REALISM_PSP.zip
+          sha256sum release/PSP/GAME/DALREYS/EBOOT.PBP DALNIY_REYS_REALISM_PSP.zip > release/SHA256SUMS.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ROADHAUL_REALISM_PSP_INSTALL
+          path: |
+            DALNIY_REYS_REALISM_PSP.zip
+            release/SHA256SUMS.txt
+            release/PSP_COMPAT_VERIFY.txt
+          retention-days: 14
+          if-no-files-found: error
