@@ -256,7 +256,7 @@ void rh_step(Game *g,Controls in,float dt){
  physics_step(g,in,dt*.5f);
  in.reverse_request=0;
  physics_step(g,in,dt*.5f);
- update_traffic(g,dt);g->sim_t+=dt;g->clock_hours+=dt/120.0f;
+ update_traffic(g,dt);g->sim_t+=dt;g->clock_hours+=dt*(24.0f/RH_DAY_SECONDS);
  if(g->clock_hours>=24)g->clock_hours-=24;
  if(g->notice_ticks>0)g->notice_ticks--;
 }
