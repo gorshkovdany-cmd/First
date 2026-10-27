@@ -1,0 +1,253 @@
+{
+  "version": 1,
+  "license": "original geometry authored for this game; no third-party assets bundled",
+  "units": "metres",
+  "quantization": "int16, 1/64m",
+  "lod_ranges_m": [
+    65,
+    170,
+    400
+  ],
+  "vertex_stride_bytes": 6,
+  "triangle_stride_bytes": 8,
+  "models": [
+    {
+      "name": "car",
+      "source": "original generated",
+      "lods": [
+        {
+          "lod": 0,
+          "vertices": 236,
+          "triangles": 288,
+          "estimated_static_bytes": 3720
+        },
+        {
+          "lod": 1,
+          "vertices": 124,
+          "triangles": 136,
+          "estimated_static_bytes": 1832
+        },
+        {
+          "lod": 2,
+          "vertices": 16,
+          "triangles": 20,
+          "estimated_static_bytes": 256
+        }
+      ]
+    },
+    {
+      "name": "truck",
+      "source": "original generated",
+      "lods": [
+        {
+          "lod": 0,
+          "vertices": 524,
+          "triangles": 682,
+          "estimated_static_bytes": 8600
+        },
+        {
+          "lod": 1,
+          "vertices": 132,
+          "triangles": 162,
+          "estimated_static_bytes": 2088
+        },
+        {
+          "lod": 2,
+          "vertices": 68,
+          "triangles": 82,
+          "estimated_static_bytes": 1064
+        }
+      ]
+    },
+    {
+      "name": "building",
+      "source": "original generated",
+      "lods": [
+        {
+          "lod": 0,
+          "vertices": 688,
+          "triangles": 860,
+          "estimated_static_bytes": 11008
+        },
+        {
+          "lod": 1,
+          "vertices": 48,
+          "triangles": 60,
+          "estimated_static_bytes": 768
+        },
+        {
+          "lod": 2,
+          "vertices": 16,
+          "triangles": 20,
+          "estimated_static_bytes": 256
+        }
+      ]
+    },
+    {
+      "name": "warehouse",
+      "source": "original generated",
+      "lods": [
+        {
+          "lod": 0,
+          "vertices": 128,
+          "triangles": 160,
+          "estimated_static_bytes": 2048
+        },
+        {
+          "lod": 1,
+          "vertices": 64,
+          "triangles": 80,
+          "estimated_static_bytes": 1024
+        },
+        {
+          "lod": 2,
+          "vertices": 16,
+          "triangles": 20,
+          "estimated_static_bytes": 256
+        }
+      ]
+    },
+    {
+      "name": "streetlamp",
+      "source": "original generated",
+      "lods": [
+        {
+          "lod": 0,
+          "vertices": 40,
+          "triangles": 50,
+          "estimated_static_bytes": 640
+        },
+        {
+          "lod": 1,
+          "vertices": 24,
+          "triangles": 30,
+          "estimated_static_bytes": 384
+        },
+        {
+          "lod": 2,
+          "vertices": 24,
+          "triangles": 30,
+          "estimated_static_bytes": 384
+        }
+      ]
+    },
+    {
+      "name": "tree",
+      "source": "original generated",
+      "lods": [
+        {
+          "lod": 0,
+          "vertices": 23,
+          "triangles": 22,
+          "estimated_static_bytes": 314
+        },
+        {
+          "lod": 1,
+          "vertices": 18,
+          "triangles": 18,
+          "estimated_static_bytes": 252
+        },
+        {
+          "lod": 2,
+          "vertices": 13,
+          "triangles": 14,
+          "estimated_static_bytes": 190
+        }
+      ]
+    },
+    {
+      "name": "grass",
+      "source": "original generated",
+      "lods": [
+        {
+          "lod": 0,
+          "vertices": 12,
+          "triangles": 6,
+          "estimated_static_bytes": 120
+        },
+        {
+          "lod": 1,
+          "vertices": 8,
+          "triangles": 4,
+          "estimated_static_bytes": 80
+        },
+        {
+          "lod": 2,
+          "vertices": 4,
+          "triangles": 2,
+          "estimated_static_bytes": 40
+        }
+      ]
+    },
+    {
+      "name": "bridge",
+      "source": "original generated",
+      "lods": [
+        {
+          "lod": 0,
+          "vertices": 120,
+          "triangles": 150,
+          "estimated_static_bytes": 1920
+        },
+        {
+          "lod": 1,
+          "vertices": 40,
+          "triangles": 50,
+          "estimated_static_bytes": 640
+        },
+        {
+          "lod": 2,
+          "vertices": 8,
+          "triangles": 10,
+          "estimated_static_bytes": 128
+        }
+      ]
+    },
+    {
+      "name": "puddle",
+      "source": "original generated",
+      "lods": [
+        {
+          "lod": 0,
+          "vertices": 8,
+          "triangles": 4,
+          "estimated_static_bytes": 80
+        },
+        {
+          "lod": 1,
+          "vertices": 4,
+          "triangles": 2,
+          "estimated_static_bytes": 40
+        },
+        {
+          "lod": 2,
+          "vertices": 4,
+          "triangles": 2,
+          "estimated_static_bytes": 40
+        }
+      ]
+    }
+  ],
+  "candidate_cc0_sources": [
+    {
+      "name": "Kenney Car Kit",
+      "url": "https://kenney.nl/assets/car-kit",
+      "status": "license verified, models not imported"
+    },
+    {
+      "name": "Kenney City Kit Roads",
+      "url": "https://kenney.nl/assets/city-kit-roads",
+      "status": "license verified, models not imported"
+    },
+    {
+      "name": "Kenney City Kit Industrial",
+      "url": "https://kenney.nl/assets/city-kit-industrial",
+      "status": "license verified, models not imported"
+    },
+    {
+      "name": "Kenney City Kit Suburban",
+      "url": "https://kenney.nl/assets/city-kit-suburban",
+      "status": "license verified, models not imported"
+    }
+  ]
+}
