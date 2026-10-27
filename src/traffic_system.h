@@ -36,7 +36,7 @@ typedef struct {
  RH_TPedestrian pedestrians[RH_TPEDESTRIANS]; RH_TPatrol patrols[RH_TPATROLS];
  uint8_t node_count,edge_count,signal_count,car_count,ped_count;
  uint8_t wanted,patrol_count,last_violation;
- float chase_time,chase_contact,patrol_cooldown,speed_violation_time;
+ double chase_time; float chase_contact,patrol_cooldown,speed_violation_time;
  float fines_total; unsigned int fines_count; uint32_t rng;
  float player_prev_x,player_prev_z; uint8_t player_observed;
 } RH_TrafficWorld;
