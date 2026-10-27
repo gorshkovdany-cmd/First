@@ -27,4 +27,4 @@
 
 ## Blockers
 
-GitHub PR workflow run #40596420025 passed baseline desktop tests, PSPDEV build, PBP verification and artifact upload, **but Makefile does not yet link the new ART module**, so this is NOT ART-on-PSP verification. No PPSSPP/physical PSP validation in ART role; full integration not yet performed. No texture atlas or third-party asset conversion yet. High-detail building is 860 triangles and needs strict visibility budget.
+GitHub PR workflow run #40596420025 passed baseline desktop tests, PSPDEV build, PBP verification and artifact upload, **but Makefile does not yet link the new ART module**, so this is NOT ART-on-PSP verification. No PPSSPP/physical PSP validation in ART role; full integration not yet performed. Official Kenney Car Kit ZIP download was identified from the source site (`https://kenney.nl/media/pages/assets/car-kit/1a312ec241-1775131960/kenney_car-kit.zip`), but the container network cannot resolve the host; official models were NOT downloaded or bundled. No texture atlas or third-party asset conversion yet. High-detail building is 860 triangles and needs strict visibility budget.
