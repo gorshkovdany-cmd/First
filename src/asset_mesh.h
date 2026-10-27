@@ -14,6 +14,8 @@ typedef enum {
 } RHAssetType;
 typedef struct {float x,y,z,yaw,scale;unsigned variant;} RHAssetInstance;
 typedef struct {float x,y,z;} RHAssetPoint;
+/* emissive: 0=daylight-lit opaque; 1=self-lit opaque; 2=alpha-blended decal.
+ * Decals must render in a separate blend-enabled, depth-read-only pass. */
 typedef struct {RHAssetPoint p[3];uint32_t abgr;uint8_t emissive;} RHAssetTriangle;
 typedef void (*RHAssetEmit)(void *ctx,const RHAssetTriangle *triangle);
 typedef struct {
@@ -32,6 +34,14 @@ unsigned rh_asset_emit(RHAssetType type,RHAssetInstance instance,float distance_
  RHAssetAtmosphere light,RHAssetEmit emit,void *ctx);
 unsigned rh_asset_triangle_budget(RHAssetType type,unsigned lod);
 unsigned rh_asset_vertex_budget(RHAssetType type,unsigned lod);
+/* Optional near-field fake contact/cast shadow: 2 triangles, 0..85m,
+ * alpha-blended dark decal; NOT real shadow mapping. */
+unsigned rh_asset_emit_shadow(RHAssetType type,RHAssetInstance instance,
+ float distance_m,float hour,RHAssetAtmosphere light,RHAssetEmit emit,void *ctx);
+/* Optional warm night light pools for lamp/headlights, <=55m.
+ * 8 radial triangles, alpha-blended. No GPU shaders required. */
+unsigned rh_asset_emit_light_pool(RHAssetType type,RHAssetInstance instance,
+ float distance_m,RHAssetAtmosphere light,RHAssetEmit emit,void *ctx);
 #ifdef __cplusplus
 }
 #endif
