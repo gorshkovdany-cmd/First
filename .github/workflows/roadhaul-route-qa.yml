@@ -1,0 +1,35 @@
+name: RoadHaul - road routing and mission contract QA
+on:
+  push:
+    branches:
+      - roadhaul-route-planner-8h
+  pull_request:
+    branches:
+      - roadhaul-realism-8h
+    paths:
+      - 'src/route_planner.*'
+      - 'tests/test_route_planner.c'
+      - 'tests/run_route_planner.sh'
+      - '.github/workflows/roadhaul-route-qa.yml'
+  workflow_dispatch:
+jobs:
+  route-test:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build and test PSP-independent routing module (warnings treated as errors)
+        run: sh tests/run_route_planner.sh
+      - name: Run address and undefined behavior sanitizers
+        run: |
+          cc -std=c11 -g -O1 -fsanitize=address,undefined -fno-omit-frame-pointer -Wall -Wextra -Wpedantic -Werror \
+            tests/test_route_planner.c src/route_planner.c -lm -o /tmp/roadhaul_route_san
+          ASAN_OPTIONS=detect_leaks=1 /tmp/roadhaul_route_san
+      - name: Run camera-facing city sector/LOD selection regression
+        run: sh tests/run_visibility_budget.sh
+      - name: Run visibility budget sanitizers
+        run: |
+          cc -std=c11 -g -O1 -fsanitize=address,undefined -fno-omit-frame-pointer -Wall -Wextra -Wpedantic -Werror \
+            tests/test_visibility_budget.c src/visibility_budget.c -lm -o /tmp/roadhaul_vis_san
+          ASAN_OPTIONS=detect_leaks=1 /tmp/roadhaul_vis_san
