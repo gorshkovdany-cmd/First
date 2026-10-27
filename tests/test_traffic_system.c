@@ -93,6 +93,17 @@ static void police_chase(void){
  assert(rh_traffic_active_patrols(&w)==0);
  printf("patrol pursuit 60s timeout, reinforcements, catch and capped fine: PASS\n");
 }
+static void police_exact_timeout(void){
+ RH_TrafficWorld w;rh_traffic_init(&w,13);
+ RH_TPlayer player={2000,2000,30,0,900};
+ rh_traffic_report_violation(&w,RH_VIOLATION_SPEEDING,&player);
+ flee(&w,&player,3594); /* 59.9 seconds */
+ assert(w.wanted&&rh_traffic_active_patrols(&w)==3);
+ flee(&w,&player,6); /* 60.0 seconds */
+ assert(!w.wanted&&rh_traffic_active_patrols(&w)==0);
+ assert(w.fines_count==0);
+ printf("police pursuit timeout at 60.0 s, not 59.9 s: PASS\n");
+}
 static void automatic_violations(void){
  RH_TrafficWorld w;rh_traffic_init(&w,88);
  int a=rh_traffic_add_node(&w,100,100,1);
@@ -123,7 +134,7 @@ static void deterministic_stress(void){
  rh_traffic_build_sample_city(&a,2700,1450,75);
  rh_traffic_build_sample_city(&b,2700,1450,75);
  RH_TPlayer p={5000,5000,0,0,1000};
- for(int i=0;i<12000;i++){
+ for(int i=0;i<108000;i++){
   rh_traffic_step(&a,&p,STEP,(float)(i%1200)/1200);
   rh_traffic_step(&b,&p,STEP,(float)(i%1200)/1200);
  }
@@ -133,7 +144,7 @@ static void deterministic_stress(void){
   assert(a.cars[i].progress>=0&&a.cars[i].progress<=1.0f);
  }
  assert(sizeof(a)<16384);
- printf("200-second deterministic stress, fixed world memory %lu bytes: PASS\n",(unsigned long)sizeof(a));
+ printf("30-minute deterministic stress, fixed world memory %lu bytes: PASS\n",(unsigned long)sizeof(a));
 }
 static void vehicle_physics(void){
  RH_DriveBody dry,wet,heavy;
@@ -184,7 +195,7 @@ static void collisions_and_entry(void){
  printf("bounded collision impulses, vehicle entry/exit safety: PASS\n");
 }
 int main(void){
- traffic_basics();red_light_stop();pedestrian_crossing();police_chase();
+ traffic_basics();red_light_stop();pedestrian_crossing();police_chase();police_exact_timeout();
  automatic_violations();deterministic_stress();
  vehicle_physics();collisions_and_entry();
  puts("PASS: PSP traffic system deterministic smoke and safety tests");return 0;
