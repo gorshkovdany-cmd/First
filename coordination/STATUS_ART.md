@@ -22,7 +22,7 @@
 3. User's new priorities: **living illuminated city, saturated sunrise/sunset/day, strong shadows, headlamps, minor sound polish**. Coordinate with traffic and integration roles for city traffic and audio. Patrol pursuit/penalties is gameplay role, not ART.
 4. Follow-up ART: implement offline CC0 Kenney OBJ/glTF to PSP conversion with manifest and triangle/texture budgets, richer modular facades and roof variation, texture atlas, reduced near-LOD building count.
 
-**Commit SHA:** to be filled after GitHub commit. **PR:** to be filled after creation.
+**Implementation commit SHA:** `d3a28d393a72d2f0f854aeb562f75c760e990395`. **PR:** https://github.com/gorshkovdany-cmd/First/pull/7.
 
 ## Blockers
 
