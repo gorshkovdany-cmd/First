@@ -22,8 +22,8 @@
 3. User's new priorities: **living illuminated city, saturated sunrise/sunset/day, strong shadows, headlamps, minor sound polish**. Coordinate with traffic and integration roles for city traffic and audio. Patrol pursuit/penalties is gameplay role, not ART.
 4. Follow-up ART: implement offline CC0 Kenney OBJ/glTF to PSP conversion with manifest and triangle/texture budgets, richer modular facades and roof variation, texture atlas, reduced near-LOD building count.
 
-**Implementation commit SHA:** `d3a28d393a72d2f0f854aeb562f75c760e990395`. **PR:** https://github.com/gorshkovdany-cmd/First/pull/7.
+**Implementation commit SHA:** `d3a28d393a72d2f0f854aeb562f75c760e990395`; **asset manifest commit:** `cfeee3b43c444ba81e06fe32b09c29a9a5c5bb0d`. **PR:** https://github.com/gorshkovdany-cmd/First/pull/7.
 
 ## Blockers
 
-No PPSSPP/physical PSP validation in ART role; full integration not yet performed. No texture atlas or third-party asset conversion yet. High-detail building is 860 triangles and needs strict visibility budget.
+No PPSSPP/physical PSP validation in ART role; full integration not yet performed. No texture atlas or third-party asset conversion yet. Added `assets/asset_manifest.json` with per-LOD budgets and CC0 candidate provenance; raw geometry is 38,172 bytes. High-detail building is 860 triangles and needs strict visibility budget.
