@@ -35,6 +35,11 @@ int main(void){
  assert(!rh_load(&loaded,"test_state.dat"));remove("test_state.dat");
  Game t;rh_new_game(&t);rh_set_player(&t,0,100,0);drive(&t,1,0,0,1000);
  assert(t.player.odo>.001 && t.player.fuel<RH_TRUCKS[0].tank_l);
+ Game day;rh_new_game(&day);Controls neutral={0};
+ for(int frame=0;frame<12600;frame++)rh_step(&day,neutral,1.0f/60.0f);
+ assert(fabsf(day.clock_hours-20.0f)<.15f);
+ for(int frame=0;frame<12600;frame++)rh_step(&day,neutral,1.0f/60.0f);
+ assert(fabsf(day.clock_hours-8.0f)<.15f);
  printf("PASS: terrain, generated jobs, throttle, brake, cargo, economy, save, corruption check\n");
  return 0;
 }
