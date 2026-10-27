@@ -174,3 +174,69 @@ unsigned rh_asset_emit(RHAssetType type,RHAssetInstance inst,float distance_m,
  }
  return m->nf;
 }
+
+/* The following optional decals use alpha in the ABGR vertex color.
+ * Integrator MUST use GU_BLEND and GU depth test with depth writes off.
+ * Opaque triangle submission would make these look like dark rectangles. */
+static int valid_decal(RHAssetInstance a,float distance_m,float cutoff,RHAssetEmit emit){
+ return emit&&isfinite(distance_m)&&distance_m>=0&&distance_m<=cutoff&&
+ isfinite(a.x)&&isfinite(a.y)&&isfinite(a.z)&&isfinite(a.yaw)&&
+ isfinite(a.scale)&&a.scale>0&&a.scale<=64;
+}
+unsigned rh_asset_emit_shadow(RHAssetType type,RHAssetInstance inst,
+ float distance_m,float hour,RHAssetAtmosphere light,RHAssetEmit emit,void *ctx){
+ if(!valid_decal(inst,distance_m,85.0f,emit)||
+    (unsigned)type>=RH_ASSET_COUNT||light.direct_sun<.13f||
+    type==RH_ASSET_PUDDLE||type==RH_ASSET_GRASS)return 0;
+ const float width[]={1.9f,2.6f,15.0f,27.0f,.35f,3.6f,0,15.0f,0};
+ const float length[]={4.2f,12.5f,13.0f,18.0f,.35f,3.6f,0,48.0f,0};
+ const float height[]={1.6f,4.0f,18.0f,9.0f,7.3f,7.0f,0,5.0f,0};
+ float h=height[type]*inst.scale;
+ float t=fmodf(hour,24.0f);if(t<0)t+=24.0f;
+ float az=t*.2617993878f;
+ float sun_height=sinf((t-6.0f)*.2617993878f);
+ if(sun_height<.18f)sun_height=.18f;
+ float reach=h*(1.0f-sun_height)/(.25f+sun_height);
+ if(reach>35.0f)reach=35.0f;
+ float dx=-cosf(az)*reach,dz=-sinf(az)*reach;
+ float hw=width[type]*inst.scale*.5f,hl=length[type]*inst.scale*.5f;
+ float c=cosf(inst.yaw),s=sinf(inst.yaw);
+ RHAssetPoint corners[4];
+ for(unsigned k=0;k<4;k++){
+  float xx=(k==0||k==3)?-hw:hw;
+  float zz=(k<2)?-hl:hl;
+  corners[k].x=inst.x+xx*c+zz*s;
+  corners[k].y=inst.y+.045f;
+  corners[k].z=inst.z-xx*s+zz*c;
+ }
+ unsigned alpha=(unsigned)(30.0f+RH_MIN(light.direct_sun,1.0f)*70.0f);
+ RHAssetTriangle tri;
+ tri.abgr=(alpha<<24)|0x000c1018u;tri.emissive=2;
+ /* Extend a silhouette from its far edge, not a huge solid square. */
+ tri.p[0]=corners[0];tri.p[1]=corners[1];
+ tri.p[2]=corners[2];tri.p[2].x+=dx;tri.p[2].z+=dz;emit(ctx,&tri);
+ tri.p[0]=corners[0];tri.p[1]=corners[2];tri.p[1].x+=dx;tri.p[1].z+=dz;
+ tri.p[2]=corners[3];tri.p[2].x+=dx;tri.p[2].z+=dz;emit(ctx,&tri);
+ return 2;
+}
+unsigned rh_asset_emit_light_pool(RHAssetType type,RHAssetInstance inst,
+ float distance_m,RHAssetAtmosphere light,RHAssetEmit emit,void *ctx){
+ if(!valid_decal(inst,distance_m,55.0f,emit)||light.lamp_strength<.32f||
+   (type!=RH_ASSET_STREETLAMP&&type!=RH_ASSET_CAR&&type!=RH_ASSET_TRUCK))return 0;
+ float off=type==RH_ASSET_STREETLAMP?1.8f:(type==RH_ASSET_CAR?2.8f:3.7f);
+ float radius=type==RH_ASSET_STREETLAMP?4.8f:(type==RH_ASSET_CAR?3.2f:4.3f);
+ float s=sinf(inst.yaw),c=cosf(inst.yaw);
+ float x=inst.x+off*s*inst.scale,z=inst.z+off*c*inst.scale;
+ RHAssetTriangle tri;
+ unsigned alpha=(unsigned)(17.0f+30.0f*light.lamp_strength);
+ tri.abgr=(alpha<<24)|(type==RH_ASSET_STREETLAMP?0x008bc8ffu:0x00d8e8ffu);
+ tri.emissive=2;
+ for(unsigned k=0;k<8;k++){
+  float a=(float)k*.7853981634f,b=(float)(k+1)*.7853981634f;
+  tri.p[0]=(RHAssetPoint){x,inst.y+.055f,z};
+  tri.p[1]=(RHAssetPoint){x+radius*cosf(a),inst.y+.055f,z+radius*sinf(a)};
+  tri.p[2]=(RHAssetPoint){x+radius*cosf(b),inst.y+.055f,z+radius*sinf(b)};
+  emit(ctx,&tri);
+ }
+ return 8;
+}
